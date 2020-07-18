@@ -1,6 +1,10 @@
 from collections import defaultdict
 
 class Graph:
+
+    # --- Build the data structure ---
+    # Create empty graph, add edge between two vertexes, manage blocked tiles and build the graph itself
+
     def __init__(self, x, y):
         self.graph = defaultdict(list)
         self.blocked = set()
@@ -34,35 +38,83 @@ class Graph:
                 if abs(firstCoords[0] - secondCoords[0]) <= 1 and abs(firstCoords[1] - secondCoords[1]) <= 1:
                     self.addEdge(first, second)
 
+    # --- Shortest path algorithms ---
+
+    # Universal function for creating the path after the main algorithm
+    def result(self, parent, dest):
+        route = list([dest])
+        previous = parent[dest]
+        while previous != -1:
+            route.append(previous)
+            previous = parent[previous]
+
+        return route
+
+    # Breadth First Search algorithm
     def BFS(self, start, dest):
-        visited = [False] * (self.x * self.y)
-        table = [-1 for i in range(self.x * self.y)]
+        numOfCells = self.x * self.y
+        visited = [False] * (numOfCells)
+        parent = [-1 for i in range(numOfCells)]
         queue = []
-        for idx in range(self.x * self.y):
+        for idx in range(numOfCells):
             if idx in self.blocked:
                 visited[idx] = True;
 
         queue.append(start)
         visited[start] = True
 
-        previous = start
         while queue:
             s = queue.pop(0)
             for i in self.graph[s]:
                 if visited[i] == False:
                     visited[i] = True
                     queue.append(i)
-                    table[i] = s
+                    parent[i] = s
                     if i == dest:
-                        previous = s
                         break
-        route = list()
-        route.append(dest)
-        while previous != -1:
-            route.append(previous)
-            previous = table[previous]
 
-        return route
+        return self.result(parent, dest)
+
+    # Dijkstra algorithm
+    def minIdx(self, dist, queue) -> int:
+        minValue = float('inf')
+        minIdx = -1
+        for i in range(len(dist)):
+            if i in queue and dist[i] < minValue:
+                minValue = dist[i]
+                minIdx = i
+        return minIdx
+
+    def Dijkstra(self, start, dest):
+        numOfCells = self.x * self.y
+        distance = [float('inf')] * numOfCells
+        parent = [-1] * numOfCells
+
+        distance[start] = 0
+        queue = []
+        for idx in range(numOfCells):
+            if idx not in self.blocked:
+                queue.append(idx)
+
+        while queue:
+            s = self.minIdx(distance, queue)
+            if s == dest:
+                break
+            try:
+                queue.remove(s)
+            except ValueError:
+                return [dest]
+            for idx in self.graph[s]:
+                if idx in queue and distance[s] + 1 < distance[idx]:
+                    distance[idx] = distance[s] + 1
+                    parent[idx] = s
+
+        return self.result(parent, dest)
+
+    # A* algorithm
+
+    # Bidirectional search
+
 
 def getCoords(idx, maxX):
     x = idx % maxX
@@ -71,10 +123,11 @@ def getCoords(idx, maxX):
 
 def main():
     graph = Graph(3, 3)
-    graph.addBlocked(4)
     graph.buildGraph()
     print(graph)
-    route = graph.BFS(0, 8)
+    route = graph.BFS(2, 6)
+    print(route)
+    route = graph.Dijkstra(2, 6)
     print(route)
 
 if __name__ == '__main__':
