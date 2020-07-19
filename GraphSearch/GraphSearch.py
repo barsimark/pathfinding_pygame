@@ -49,7 +49,7 @@ class Graph:
             route.append(previous)
             previous = parent[previous]
 
-        return route
+        return [item for item in reversed(route)]
 
     # Breadth First Search algorithm
     def BFS(self, start, dest):
@@ -159,7 +159,60 @@ class Graph:
 
         return self.result(parent, dest)
 
-    # Bidirectional search
+    # Bidirectional BFS
+    def intersectingNode(self, first, second):
+        for idx in range(self.x * self.y):
+            if idx not in self.blocked and first[idx] and second[idx]:
+                return idx
+        return -1
+
+    def BiDirBFS(self, start, dest):
+        if start == dest:
+            return [dest]
+        if start in self.graph[dest] or dest in self.graph[start]:
+            return [start, dest]
+        numOfCells = self.x * self.y
+        sVisited = [False] * numOfCells
+        dVisited = [False] * numOfCells
+        sParent = [-1] * numOfCells
+        dParent = [-1] * numOfCells
+        sQueue = [start]
+        dQueue = [dest]
+
+        for idx in range(numOfCells):
+            if idx in self.blocked:
+                sVisited[idx] = True
+                dVisited[idx] = True
+
+        while sQueue and dQueue:
+            sCurrent = sQueue.pop(0)
+            dCurrent = dQueue.pop(0)
+            for neighbor in self.graph[sCurrent]:
+                if not sVisited[neighbor]:
+                    sParent[neighbor] = sCurrent
+                    sVisited[neighbor] = True
+                    sQueue.append(neighbor)
+            for neighbor in self.graph[dCurrent]:
+                if not dVisited[neighbor]:
+                    dParent[neighbor] = dCurrent
+                    dVisited[neighbor] = True
+                    dQueue.append(neighbor)
+
+            intersect = self.intersectingNode(sVisited, dVisited)
+            if intersect != -1:
+                route = [intersect]
+                i = intersect
+                while i != start:
+                    route.append(sParent[i])
+                    i = sParent[i]
+                route = [item for item in reversed(route)]
+                i = intersect
+                while i != dest:
+                    route.append(dParent[i])
+                    i = dParent[i]
+                return route
+
+        return [dest]
 
 
 def getCoords(idx, maxX):
@@ -178,6 +231,8 @@ def main():
     route = graph.Dijkstra(start, end)
     print(route)
     route = graph.AStar(start, end)
+    print(route)
+    route = graph.BiDirBFS(start, end)
     print(route)
 
 if __name__ == '__main__':
