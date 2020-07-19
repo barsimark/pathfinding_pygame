@@ -1,4 +1,5 @@
 from collections import defaultdict
+from math import sqrt
 
 class Graph:
 
@@ -112,6 +113,51 @@ class Graph:
         return self.result(parent, dest)
 
     # A* algorithm
+    def distanceTo(self, current, dest):
+        currentCoords = getCoords(current, self.x)
+        destCoords = getCoords(dest, self.x)
+        return sqrt(pow(currentCoords[0] - destCoords[0], 2) + pow(currentCoords[1] - destCoords[1], 2))
+
+    def minIdxAStar(self, open, distance, start, dest):
+        minIdx = open[0]
+        minValue = self.distanceTo(start, open[0]) + self.distanceTo(open[0], dest)
+        for i in open:
+            dist_temp = self.distanceTo(start, i) + self.distanceTo(i, dest)
+            if dist_temp < minValue:
+                minIdx = i
+                minValue = dist_temp
+        return minIdx
+
+    def AStar(self, start, dest):
+        numOfCells = self.x * self.y
+        distance = [float('inf')] * numOfCells
+        parent = [-1] * numOfCells
+
+        open = [start]
+        closed = []
+        distance[start] = 0
+
+        while len(open) > 0:
+            s = self.minIdxAStar(open, distance, start, dest)
+            open.remove(s)
+            if s == dest:
+                break
+            closed.append(s)
+            for neighbor in self.graph[s]:
+                if neighbor in closed:
+                    continue
+                gValue = distance[s] + self.distanceTo(s, neighbor)
+                fValue = gValue + self.distanceTo(neighbor, dest)
+                canAdd = True
+                for node in open:
+                    if neighbor == node and fValue > distance[s] + self.distanceTo(s, dest):
+                        canAdd = False
+                if canAdd:
+                    open.append(neighbor)
+                    distance[neighbor] = gValue
+                    parent[neighbor] = s
+
+        return self.result(parent, dest)
 
     # Bidirectional search
 
@@ -122,12 +168,16 @@ def getCoords(idx, maxX):
     return [x, y]
 
 def main():
+    start = 0
+    end = 8
     graph = Graph(3, 3)
     graph.buildGraph()
     print(graph)
-    route = graph.BFS(2, 6)
+    route = graph.BFS(start, end)
     print(route)
-    route = graph.Dijkstra(2, 6)
+    route = graph.Dijkstra(start, end)
+    print(route)
+    route = graph.AStar(start, end)
     print(route)
 
 if __name__ == '__main__':
