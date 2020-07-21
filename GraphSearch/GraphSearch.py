@@ -1,6 +1,6 @@
 from collections import defaultdict
 from math import sqrt
-import pygame, sys
+import pygame, sys, time
 
 class Graph:
 
@@ -75,6 +75,8 @@ class Graph:
                     parent[i] = s
                     if i == dest:
                         break
+            if s != start:
+                drawOneCell(s)
 
         return self.result(parent, dest)
 
@@ -111,6 +113,8 @@ class Graph:
                 if idx in queue and distance[s] + 1 < distance[idx]:
                     distance[idx] = distance[s] + 1
                     parent[idx] = s
+            if s != start:
+                drawOneCell(s)
 
         return self.result(parent, dest)
 
@@ -138,6 +142,8 @@ class Graph:
         open = [start]
         closed = []
         distance[start] = 0
+        for node in self.blocked:
+            closed.append(node)
 
         while len(open) > 0:
             s = self.minIdxAStar(open, distance, start, dest)
@@ -148,7 +154,7 @@ class Graph:
             for neighbor in self.graph[s]:
                 if neighbor in closed:
                     continue
-                gValue = distance[s] + self.distanceTo(s, neighbor)
+                gValue = distance[s] + 1
                 fValue = gValue + self.distanceTo(neighbor, dest)
                 canAdd = True
                 for node in open:
@@ -158,6 +164,8 @@ class Graph:
                     open.append(neighbor)
                     distance[neighbor] = gValue
                     parent[neighbor] = s
+            if s != start:
+                drawOneCell(s)
 
         return self.result(parent, dest)
 
@@ -214,6 +222,11 @@ class Graph:
                     i = dParent[i]
                 return route
 
+            if sCurrent != start:
+                drawOneCell(sCurrent)
+            if dCurrent != dest:
+                drawOneCell(dCurrent)
+
         return [dest]
 
 
@@ -236,6 +249,13 @@ GRAY = (200, 200, 200)
 RED = (255, 40, 0)
 GREEN = (0, 128, 0)
 YELLOW = (235, 186, 26)
+LIGHTBLUE = (115, 194, 251)
+
+def drawOneCell(cell):
+    pos = getLeftTop(cell)
+    pygame.draw.rect(BOARD, LIGHTBLUE, [pos[0], pos[1], CELLSIZE, CELLSIZE])
+    drawGrid()
+    time.sleep(0.01)
 
 def main():
     start = 0
@@ -243,6 +263,7 @@ def main():
     pygame.init()
     global BOARD
     BOARD = pygame.display.set_mode((XSIZE, YSIZE))
+    pygame.display.set_caption("Pathfinding Visualizer")
     drawBoard(start, end)
     drawGrid()
     graph = Graph(XCELLS, YCELLS)
@@ -287,7 +308,7 @@ def main():
                 else:
                     draw = False
                 if draw:
-                    drawBoard(start, end)
+                    drawBoard(start, end, False)
                     for idx in route:
                         if idx != start and idx != end:
                             pos = getLeftTop(idx)
@@ -311,8 +332,9 @@ def drawGrid():
         pygame.draw.line(BOARD, BLACK, (0, y), (XSIZE, y))
     pygame.display.update()
 
-def drawBoard(start, end):
-    BOARD.fill(WHITE)
+def drawBoard(start, end, fill = True):
+    if fill:
+        BOARD.fill(WHITE)
     startPos = getLeftTop(start)
     endPos = getLeftTop(end)
     pygame.draw.rect(BOARD, RED, [startPos[0], startPos[1], CELLSIZE, CELLSIZE])
