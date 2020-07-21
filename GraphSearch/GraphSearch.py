@@ -1,5 +1,6 @@
 from collections import defaultdict
 from math import sqrt
+import pygame, sys
 
 class Graph:
 
@@ -28,6 +29,7 @@ class Graph:
         self.blocked.clear()
 
     def buildGraph(self):
+        self.graph.clear()
         for first in range(self.x * self.y):
             if first in self.blocked:
                 continue
@@ -220,20 +222,108 @@ def getCoords(idx, maxX):
     y = idx // maxX
     return [x, y]
 
+
+CELLSIZE = 30
+XCELLS = 15
+YCELLS = 15
+
+XSIZE = CELLSIZE * XCELLS
+YSIZE = CELLSIZE * YCELLS
+
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GRAY = (200, 200, 200)
+RED = (255, 40, 0)
+GREEN = (0, 128, 0)
+YELLOW = (235, 186, 26)
+
 def main():
     start = 0
-    end = 8
-    graph = Graph(3, 3)
-    graph.buildGraph()
-    print(graph)
-    route = graph.BFS(start, end)
-    print(route)
-    route = graph.Dijkstra(start, end)
-    print(route)
-    route = graph.AStar(start, end)
-    print(route)
-    route = graph.BiDirBFS(start, end)
-    print(route)
+    end = XCELLS * YCELLS - 1
+    pygame.init()
+    global BOARD
+    BOARD = pygame.display.set_mode((XSIZE, YSIZE))
+    drawBoard(start, end)
+    drawGrid()
+    graph = Graph(XCELLS, YCELLS)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                cellidx = getCellIdx(pygame.mouse.get_pos())
+                if cellidx != start and cellidx != end:
+                    if cellidx in graph.blocked:
+                        graph.removeBlocked(cellidx)
+                    else:
+                        graph.addBlocked(cellidx)
+                    drawBoard(start, end)
+                    drawGraph(graph)
+                    drawGrid()
+            elif event.type == pygame.KEYDOWN:
+                draw = True
+                graph.buildGraph()
+                if event.key == pygame.K_1:
+                    route = graph.BFS(start, end)
+                elif event.key == pygame.K_2:
+                    route = graph.Dijkstra(start, end)
+                elif event.key == pygame.K_3:
+                    route = graph.AStar(start, end)
+                elif event.key == pygame.K_4:
+                    route = graph.BiDirBFS(start, end)
+                elif event.key == pygame.K_DELETE:
+                    graph.clearBlocked()
+                    drawBoard(start, end)
+                    drawGraph(graph)
+                    drawGrid()
+                    draw = False
+                elif event.key == pygame.K_n:
+                    drawBoard(start, end)
+                    drawGraph(graph)
+                    drawGrid()
+                    draw = False
+                else:
+                    draw = False
+                if draw:
+                    drawBoard(start, end)
+                    for idx in route:
+                        if idx != start and idx != end:
+                            pos = getLeftTop(idx)
+                            pygame.draw.rect(BOARD, YELLOW, [pos[0], pos[1], CELLSIZE, CELLSIZE])
+                    drawGraph(graph)
+                    drawGrid()
+                    
+def getLeftTop(idx):
+    cellCoords = getCoords(idx, XCELLS)
+    return [cellCoords[0] * CELLSIZE, cellCoords[1] * CELLSIZE]
+
+def getCellIdx(coords):
+    x = coords[0] // CELLSIZE
+    y = coords[1] // CELLSIZE
+    return y * XCELLS + x
+
+def drawGrid():
+    for x in range(0, XSIZE, CELLSIZE):
+        pygame.draw.line(BOARD, BLACK, (x, 0), (x, YSIZE))
+    for y in range(0, YSIZE, CELLSIZE):
+        pygame.draw.line(BOARD, BLACK, (0, y), (XSIZE, y))
+    pygame.display.update()
+
+def drawBoard(start, end):
+    BOARD.fill(WHITE)
+    startPos = getLeftTop(start)
+    endPos = getLeftTop(end)
+    pygame.draw.rect(BOARD, RED, [startPos[0], startPos[1], CELLSIZE, CELLSIZE])
+    pygame.draw.rect(BOARD, GREEN, [endPos[0], endPos[1], CELLSIZE, CELLSIZE])
+    pygame.display.update()
+
+def drawGraph(graph):
+    for blocked in graph.blocked:
+        pos = getLeftTop(blocked)
+        pygame.draw.rect(BOARD, GRAY, [pos[0], pos[1], CELLSIZE, CELLSIZE])
+    pygame.display.update()
 
 if __name__ == '__main__':
     main()
