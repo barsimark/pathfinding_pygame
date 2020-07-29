@@ -155,7 +155,7 @@ class Graph:
                 if neighbor in closed:
                     continue
                 gValue = distance[s] + 1
-                fValue = gValue + self.distanceTo(neighbor, dest)
+                fValue = gValue + self.distanceTo(s, dest)
                 canAdd = True
                 for node in open:
                     if neighbor == node and fValue > distance[s] + self.distanceTo(s, dest):
