@@ -202,11 +202,15 @@ class Graph:
                     sParent[neighbor] = sCurrent
                     sVisited[neighbor] = True
                     sQueue.append(neighbor)
+                    if neighbor != start and neighbor != dest:
+                        drawOneCell(neighbor)
             for neighbor in self.graph[dCurrent]:
                 if not dVisited[neighbor]:
                     dParent[neighbor] = dCurrent
                     dVisited[neighbor] = True
                     dQueue.append(neighbor)
+                    if neighbor != start and neighbor != dest:
+                        drawOneCell(neighbor)
 
             intersect = self.intersectingNode(sVisited, dVisited)
             if intersect != -1:
@@ -222,11 +226,6 @@ class Graph:
                     i = dParent[i]
                 return route
 
-            if sCurrent != start:
-                drawOneCell(sCurrent)
-            if dCurrent != dest:
-                drawOneCell(dCurrent)
-
         return [dest]
 
 
@@ -237,8 +236,8 @@ def getCoords(idx, maxX):
 
 
 CELLSIZE = 30
-XCELLS = 15
-YCELLS = 15
+XCELLS = 30
+YCELLS = 20
 
 XSIZE = CELLSIZE * XCELLS
 YSIZE = CELLSIZE * YCELLS
@@ -271,8 +270,12 @@ def main():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.display.quit()
                 pygame.quit()
-                sys.exit()
+                try:
+                    sys.exit()
+                except SystemExit:
+                    exit(0)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 cellidx = getCellIdx(pygame.mouse.get_pos())
                 if cellidx != start and cellidx != end:
